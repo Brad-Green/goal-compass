@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useGoals } from "@/hooks/useGoals";
 import { GoalsSection } from "@/components/goals/GoalsSection";
 import { GoalDetailSheet } from "@/components/goals/GoalDetailSheet";
@@ -11,6 +11,25 @@ const Index = () => {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  // Group past goals by quarter
+  const pastGoalsByQuarter = useMemo(() => {
+    const grouped: Record<string, Goal[]> = {};
+    pastGoals.forEach((goal) => {
+      if (!grouped[goal.quarter]) {
+        grouped[goal.quarter] = [];
+      }
+      grouped[goal.quarter].push(goal);
+    });
+    // Sort quarters in descending order (most recent first)
+    const sortedQuarters = Object.keys(grouped).sort((a, b) => {
+      const [qA, yearA] = a.split(" ");
+      const [qB, yearB] = b.split(" ");
+      if (yearA !== yearB) return parseInt(yearB) - parseInt(yearA);
+      return parseInt(qB.slice(1)) - parseInt(qA.slice(1));
+    });
+    return sortedQuarters.map((quarter) => ({ quarter, goals: grouped[quarter] }));
+  }, [pastGoals]);
+
   const handleSelectGoal = (goal: Goal) => {
     setSelectedGoal(goal);
     setSheetOpen(true);
@@ -18,7 +37,6 @@ const Index = () => {
 
   const handleUpdateGoal = (id: string, updates: Partial<Goal>) => {
     updateGoal(id, updates);
-    // Update the selected goal in state to reflect changes immediately
     setSelectedGoal((prev) =>
       prev && prev.id === id ? { ...prev, ...updates } : prev
     );
@@ -53,13 +71,14 @@ const Index = () => {
           emptyMessage="No goals for this quarter yet. Click 'Add Goal' to create one."
         />
 
-        {pastGoals.length > 0 && (
+        {pastGoalsByQuarter.map(({ quarter, goals }) => (
           <GoalsSection
-            title="Past Goals"
-            goals={pastGoals}
+            key={quarter}
+            title={quarter}
+            goals={goals}
             onSelectGoal={handleSelectGoal}
           />
-        )}
+        ))}
       </main>
 
       {/* Goal Detail Sheet */}
