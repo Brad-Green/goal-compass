@@ -100,6 +100,10 @@ export function useGoals() {
   const currentGoals = goals.filter((g) => g.quarter === currentQuarter);
   const pastGoals = goals.filter((g) => g.quarter !== currentQuarter);
 
+  const deleteGoal = (id: string) => {
+    setGoals((prev) => prev.filter((goal) => goal.id !== id));
+  };
+
   return {
     goals,
     currentGoals,
@@ -107,5 +111,6 @@ export function useGoals() {
     currentQuarter,
     updateGoal,
     addGoal,
+    deleteGoal,
   };
 }

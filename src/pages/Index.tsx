@@ -5,11 +5,13 @@ import { GoalDetailSheet } from "@/components/goals/GoalDetailSheet";
 import { AddGoalDialog } from "@/components/goals/AddGoalDialog";
 import type { Goal } from "@/types/goal";
 import { Target } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const { currentGoals, pastGoals, currentQuarter, updateGoal, addGoal } = useGoals();
+  const { currentGoals, pastGoals, currentQuarter, updateGoal, addGoal, deleteGoal } = useGoals();
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { toast } = useToast();
 
   // Group past goals by quarter
   const pastGoalsByQuarter = useMemo(() => {
@@ -20,7 +22,6 @@ const Index = () => {
       }
       grouped[goal.quarter].push(goal);
     });
-    // Sort quarters in descending order (most recent first)
     const sortedQuarters = Object.keys(grouped).sort((a, b) => {
       const [qA, yearA] = a.split(" ");
       const [qB, yearB] = b.split(" ");
@@ -40,6 +41,28 @@ const Index = () => {
     setSelectedGoal((prev) =>
       prev && prev.id === id ? { ...prev, ...updates } : prev
     );
+    toast({
+      title: "Goal updated",
+      description: "Your changes have been saved.",
+    });
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    deleteGoal(id);
+    setSelectedGoal(null);
+    toast({
+      title: "Goal deleted",
+      description: "The goal has been permanently removed.",
+      variant: "destructive",
+    });
+  };
+
+  const handleAddGoal = (goal: Parameters<typeof addGoal>[0]) => {
+    addGoal(goal);
+    toast({
+      title: "Goal created",
+      description: `"${goal.title}" has been added to ${currentQuarter}.`,
+    });
   };
 
   return (
@@ -57,7 +80,7 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">{currentQuarter}</p>
               </div>
             </div>
-            <AddGoalDialog quarter={currentQuarter} onAdd={addGoal} />
+            <AddGoalDialog quarter={currentQuarter} onAdd={handleAddGoal} />
           </div>
         </div>
       </header>
@@ -87,6 +110,7 @@ const Index = () => {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onUpdate={handleUpdateGoal}
+        onDelete={handleDeleteGoal}
       />
     </div>
   );
